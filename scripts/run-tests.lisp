@@ -1,0 +1,5 @@
+(require :asdf)
+(push #p"/root/common-lisp/lispolar/" asdf:*central-registry*)
+(asdf:load-system :lispolar)
+(asdf:test-system :lispolar)
+(uiop:quit 0)
