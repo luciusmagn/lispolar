@@ -22,7 +22,7 @@
 
 (defun polar--base64-encode (bytes)
   "Encode BYTES as standard Base64 without line breaks."
-  (usb8-array-to-base64-string bytes :columns nil))
+  (usb8-array-to-base64-string bytes :columns 0))
 
 
 (defun polar--base64-decode (string)
