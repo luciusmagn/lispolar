@@ -76,8 +76,8 @@ Return a YASON value. Signal POLAR-HTTP-ERROR on non-success responses."
                             (or status 0)
                             (or body (princ-to-string condition))
                             condition)))
-      (polar-error ()
-        (error))
+      (polar-error (condition)
+        (error condition))
       (error (condition)
         (polar--fail method
                      (format nil "Polar request to ~A failed" path)
