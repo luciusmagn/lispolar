@@ -1,0 +1,113 @@
+#+TITLE: lispolar
+#+STARTUP: content
+
+=lispolar= is a Common Lisp client for [[https://polar.sh][Polar.sh]].
+
+It covers the Polar surfaces used by Hiisi today:
+
+- authenticated API requests with production or sandbox base URLs
+- checkout session creation (=POST /v1/checkouts=)
+- checkout-link URL construction for =buy.polar.sh=
+- customer portal session creation (=POST /v1/customer-sessions=)
+- Standard Webhooks signature verification
+- checkout and subscription webhook payload parsing
+
+Hiisi-specific product catalogs, funnel events, and route handlers stay out of
+this library on purpose. Applications can adopt =lispolar= first, then delete
+their local Polar glue later.
+
+* License
+
+ISC. Copyright (c) 2026 Lambda Symbolics OÜ.
+
+* Loading
+
+#+BEGIN_SRC lisp
+(asdf:load-system :lispolar)
+#+END_SRC
+
+Dependencies: =cl-base64=, =dexador=, =ironclad=, =quri=, =yason=.
+
+* Client
+
+#+BEGIN_SRC lisp
+(defparameter *polar*
+  (lispolar:make-client
+   :access-token "polar_at_..."
+   :server "sandbox" ; or omit for production
+   :checkout-origin "https://app.example"))
+#+END_SRC
+
+=api-base-url= also accepts an explicit =:base-url= override.
+
+* Checkouts
+
+API session creation:
+
+#+BEGIN_SRC lisp
+(lispolar:create-checkout
+ *polar*
+ "2c61d091-c075-4c01-8c13-7077c8977985"
+ "user@example.com"
+ 42
+ :selected-plan "monthly")
+;; => (:URL "https://..." :ID "..." :RAW ...)
+#+END_SRC
+
+Checkout-link fallback for non-UUID product identifiers:
+
+#+BEGIN_SRC lisp
+(lispolar:create-checkout-url
+ *polar*
+ "polar_cl_demo"
+ "user@example.com"
+ 42
+ :selected-plan "annual"
+ :external-id-prefix "hiisi-user")
+#+END_SRC
+
+Helpers:
+
+- =customer-external-id=
+- =checkout-link-slug=
+- =checkout-link-url=
+- =get-checkout-url=
+
+* Customer portal
+
+#+BEGIN_SRC lisp
+(lispolar:create-customer-portal-url
+ *polar*
+ 42
+ :external-id-prefix "hiisi-user"
+ :legacy-numeric-fallback t)
+#+END_SRC
+
+* Webhooks
+
+Verify Standard Webhooks signatures and parse the body:
+
+#+BEGIN_SRC lisp
+(let* ((verified
+        (lispolar:verify-and-parse-webhook
+         body
+         webhook-id
+         webhook-timestamp
+         webhook-signature
+         webhook-secret))
+       (payload (lispolar:verified-webhook-payload verified)))
+  (or (lispolar:webhook-payload-as-checkout payload)
+      (lispolar:webhook-payload-as-subscription payload)))
+#+END_SRC
+
+The verifier accepts raw secrets, standard Base64, Base64URL, and =polar_whs_=
+prefixed secrets. Timestamp skew defaults to five minutes.
+
+* Tests
+
+#+BEGIN_SRC lisp
+(asdf:test-system :lispolar)
+#+END_SRC
+
+The unit suite covers base URL selection, checkout-link construction, payload
+parsing, and webhook signature verification without network access.
