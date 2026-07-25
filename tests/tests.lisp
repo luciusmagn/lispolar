@@ -69,8 +69,6 @@
            (and (search "https://buy.polar.sh/polar_cl_demo?" url)
                 (search "customer_email=user%40example.com" url)
                 (search "customer_external_id=hiisi-user-7" url)
-                (search "metadata%5Bselected_plan%5D=monthly" url
-                        :test #'char=)
                 (or (search "metadata%5Bselected_plan%5D=monthly" url)
                     (search "metadata[selected_plan]=monthly" url))
                 (search "success_url=" url)
